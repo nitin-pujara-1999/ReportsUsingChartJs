@@ -1,0 +1,35 @@
+public with sharing class OpportunityReport {
+    @AuraEnabled
+    public static List<DataSet> getOpportunityRecord() {
+        List<AggregateResult> result = [
+            SELECT Count(ID) cnt, SUM(Amount) totalAmount, StageName 
+            FROM Opportunity 
+            GROUP BY StageName 
+            LIMIT 10
+        ];
+        
+        List<DataSet> dataSet = new List<DataSet>();
+        for (AggregateResult arr : result) {
+            String stage = (String) arr.get('StageName');
+            Integer total = (Integer) arr.get('cnt');
+            Decimal amount = (Decimal) arr.get('totalAmount');
+            dataSet.add(new DataSet(stage, total, amount));
+        }
+        
+        return dataSet;
+    }
+
+    public class DataSet {
+        public DataSet(String label, Integer count, Decimal amount) {
+            this.label = label;
+            this.Count = count;
+            this.Amount = amount;
+        }
+        @AuraEnabled
+        public String label { get; set; }
+        @AuraEnabled
+        public Integer Count { get; set; }
+        @AuraEnabled
+        public Decimal Amount { get; set; }
+    }
+}
