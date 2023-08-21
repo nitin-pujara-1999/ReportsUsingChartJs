@@ -1,0 +1,149 @@
+({
+    doInit: function(component, event, helper) {
+        component.set("v.chartjsInitialized", false);
+    },
+    onSelectChartTypeChange: function(component, event, helper) {
+        var selectedType = component.find("type").get("v.value");
+        console.log('selectedType', selectedType);
+        component.set("v.selectedChartType", selectedType);
+        component.scriptsLoaded();
+    },
+
+    scriptsLoaded: function(component, event, helper) {
+        console.log('ScripptloadedCalled');
+        var initialized = component.get("v.chartjsInitialized");
+        if (initialized) {
+            return;
+        }
+        var action = component.get("c.getOpportunityRecord");
+        action.setCallback(this, function(response){
+            var state = response.getState();
+            if (state === 'SUCCESS') {
+                let respnse = response.getReturnValue();
+                console.log('Response', respnse);
+                var labelSet = [];
+                var dataSet = [];
+                var amountSet = [];
+                respnse.forEach(function(key){
+                    labelSet.push(key.label);
+                    dataSet.push(key.Count);
+                    amountSet.push(key.Amount);
+                });
+                this.createChart(component, labelSet, dataSet, amountSet);
+            }
+        });
+        $A.enqueueAction(action);
+    },
+
+    createChart: function(component, labelSet, dataSet, amountSet) {
+        console.log('Create chart called');
+        var ctx = component.find("barChart").getElement().getContext("2d");
+        console.log('ctx', ctx);
+        var selectedType = component.get("v.selectedChartType"); // Get selected chart type
+        
+        // Destroy the existing chart instance
+        var existingChart = component.get("v.chartInstance");
+        console.log('existingChart', existingChart);
+        if (existingChart) {
+            existingChart.destroy();
+        }
+        
+        new Chart(ctx, {
+            type: selectedType,
+            data: {
+                labels: labelSet,
+                datasets: [{
+                    label: "Opportunity Count",
+                    data: dataSet,
+                    backgroundColor: [
+                        'rgba(225, 68, 149, 0.8)',
+                        'rgba(218, 38, 216, 0.8)',
+                        'rgba(141, 38, 218, 0.8)',
+                        'rgba(38, 218, 208, 0.8)',
+                        'rgba(218, 130, 38, 0.8)',
+                        'rgba(101, 227, 22, 0.8)',
+                        'rgba(220, 77, 51, 0.8)',
+                        'rgba(220, 0, 51, 0.8)',
+                        'rgba(45, 101, 59, 0.8)',
+                        'rgba(60, 58, 30, 0.8)'
+                    ],
+                    borderColor: [
+                        'rgb(255, 99, 132)',
+                        'rgb(255, 159, 64)',
+                        'rgb(255, 205, 86)',
+                        'rgb(75, 192, 192)',
+                        'rgb(54, 162, 235)',
+                        'rgb(153, 102, 255)',
+                        'rgb(201, 203, 207)'
+                    ],
+                    hoverBackgroundColor: [
+                        "rgba(225, 68, 149, 0.8)",
+                        "#36A2EC",
+                        "#FFCE56"
+                    ],
+                    borderWidth: 2
+                    }, 
+                    {
+                        label: "Total Amount",
+                        data: amountSet,
+                        backgroundColor: [
+                            'rgba(26, 104, 49, 0.8)',
+                            'rgba(218, 38, 216, 0.8)',
+                            'rgba(141, 38, 218, 0.8)',
+                            'rgba(38, 218, 208, 0.8)',
+                            'rgba(218, 130, 38, 0.8)',
+                            'rgba(101, 227, 22, 0.8)',
+                            'rgba(220, 77, 51, 0.8)',
+                            'rgba(220, 0, 51, 0.8)',
+                            'rgba(45, 101, 59, 0.8)',
+                            'rgba(60, 58, 30, 0.8)'
+                        ],
+                        borderColor: [
+                            'rgb(255, 99, 132)',
+                            'rgb(255, 159, 64)',
+                            'rgb(255, 205, 86)',
+                            'rgb(75, 192, 192)',
+                            'rgb(54, 162, 235)',
+                            'rgb(153, 102, 255)',
+                            'rgb(201, 203, 207)'
+                        ],
+                        hoverBackgroundColor: [
+                            "rgba(26, 104, 49, 0.8)",
+                            "rgba(244, 107, 78, 0.7)",
+                            "rgba(125, 28, 100, 0.7)",
+                            "rgba(145, 14, 57, 0.7)"
+                        ],
+                        borderWidth: 2
+                        }]
+                        },
+                        options: {
+                            indexAxis: 'x',
+                            events: ['mousemove'],
+                            plugins: {
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context){
+                                            var dataIndex = context.dataIndex;
+                                            var count = dataSet[dataIndex];
+                                            var amount = amountSet[dataIndex];
+                                            var values = ['Opportunity Count: ' + count , 'Total Amount: ' + helper.formatAmount(amount)];
+                                            return values;
+                                        }
+                                    }
+                                }
+                            },
+                            scales: {
+                                y: {
+                                    ticks: {
+                                        callback: function(value,index,values){
+                                            return helper.formatAmount(value);
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                        });
+                        component.set("v.chartInstance", newChart); 
+                        }
+                        })
+                        
