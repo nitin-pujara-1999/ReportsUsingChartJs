@@ -1,15 +1,33 @@
 ({
-    formatAmount : function(amount) {
-        if(amount >= 1e9){
-            return (amount/1e9).toFixed(1) + 'B';
-        }
-        else if(amount >= 1e6){
-            return (amount/1e6).toFixed(1) + 'M';
-        }
-        else if(amount >=1e3){
-            return (amount/1e3).toFixed(1) + 'K';
+    formatAmount: function(amount) {
+        if (amount >= 1e9) {
+            return (amount / 1e9).toFixed(1) + 'B';
+        } else if (amount >= 1e6) {
+            return (amount / 1e6).toFixed(1) + 'M';
+        } else if (amount >= 1e3) {
+            return (amount / 1e3).toFixed(1) + 'K';
         }
         return amount.toFixed(0);
-    }
+    },
+    
+    updateChart: function(component) {
+        var selectedChartType = component.get("v.selectedChartType");
+        var chartInstance = component.get("v.chartInstance");
+        var chartData = component.get("v.chartData");
+        var chartOptions = component.get("v.chartOptions"); // Fetch the updated options
 
+
+        if (chartInstance) {
+            chartInstance.destroy();
+        }
+
+        var ctx = component.find("barChart").getElement().getContext("2d");
+        chartInstance = new Chart(ctx, {
+            type: selectedChartType,
+            data: chartData,
+            options: chartOptions // Use the updated options here
+
+        });
+        component.set("v.chartInstance", chartInstance);
+    }
 })
